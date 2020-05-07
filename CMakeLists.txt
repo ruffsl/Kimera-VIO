@@ -35,12 +35,6 @@ find_package(GTSAM REQUIRED)
 find_package(opengv REQUIRED)
 find_package(OpenCV 4.2.0 REQUIRED)
 find_package(DBoW2 REQUIRED)
-if(NOT TARGET DBoW2::DBoW2)
-  add_library(DBoW2::DBoW2 INTERFACE IMPORTED)
-  set_target_properties(DBoW2::DBoW2 PROPERTIES
-  INTERFACE_LINK_LIBRARIES "${DBoW2_LIBRARIES}"
-  INTERFACE_INCLUDE_DIRECTORIES "${DBoW2_INCLUDE_DIRS}")
-endif()
 find_package(KimeraRPGO REQUIRED)
 
 ### External Dependencies
@@ -118,7 +112,7 @@ add_subdirectory(src/visualizer)
 target_link_libraries(${PROJECT_NAME}
   PRIVATE
     opengv
-    DBoW2::DBoW2
+    ${DBoW2_LIBS}
     KimeraRPGO
   PUBLIC
     Boost::boost
@@ -134,11 +128,10 @@ target_include_directories(${PROJECT_NAME}
     ${GFLAGS_INCLUDE_DIRS}
     ${GLOG_INCLUDE_DIRS}
     ${GTSAM_INCLUDE_DIR}
+    ${DBoW2_INCLUDE_DIRS}
     ${opengv_DIR}/../../../include
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
     $<INSTALL_INTERFACE:include>
-  PRIVATE
-    ${DBoW2_INCLUDE_DIRS}
 )
 
 target_compile_options(${PROJECT_NAME}

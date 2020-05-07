@@ -134,10 +134,11 @@ target_include_directories(${PROJECT_NAME}
     ${GFLAGS_INCLUDE_DIRS}
     ${GLOG_INCLUDE_DIRS}
     ${GTSAM_INCLUDE_DIR}
-    ${DBoW2_INCLUDE_DIRS}/..
     ${opengv_DIR}/../../../include
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
     $<INSTALL_INTERFACE:include>
+  PRIVATE
+    ${DBoW2_INCLUDE_DIRS}
 )
 
 target_compile_options(${PROJECT_NAME}

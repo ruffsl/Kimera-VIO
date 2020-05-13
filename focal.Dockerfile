@@ -9,7 +9,6 @@
 
 ARG FROM_IMAGE=osrf/ros2:nightly
 ARG UNDERLAY_WS=/opt/underlay_ws
-ARG OVERLAY_WS=/opt/overlay_ws
 ARG KIMERA_WS=/opt/kimera_ws
 
 # multi-stage for caching
@@ -22,17 +21,13 @@ COPY ./install/underlay.repos ../
 RUN vcs import ./ < ../underlay.repos && \
     find ./ -name ".git" | xargs rm -rf
 
-# copy overlay source
-ARG OVERLAY_WS
-WORKDIR $OVERLAY_WS/src
-COPY ./install/overlay.repos ../
-RUN vcs import ./ < ../overlay.repos && \
-    find ./ -name ".git" | xargs rm -rf
-
-# copy wrapper source
+# copy kimera source
 ARG KIMERA_WS
 WORKDIR $KIMERA_WS/src
 COPY ./ ./MIT-SPARK/Kimera-VIO
+COPY ./install/kimera.repos ../
+RUN vcs import ./ < ../kimera.repos && \
+    find ./ -name ".git" | xargs rm -rf
 
 # copy manifests for caching
 WORKDIR /opt
@@ -86,11 +81,10 @@ RUN --mount=type=cache,target=/root/.ccache \
         -DGTSAM_ROT3_EXPMAP=ON
       # --event-handlers console_direct+
 
-
-# install overlay dependencies
-ARG OVERLAY_WS
-WORKDIR $OVERLAY_WS
-COPY --from=cacher /tmp/$OVERLAY_WS/src ./src
+# install kimera dependencies
+ARG KIMERA_WS
+WORKDIR $KIMERA_WS
+COPY --from=cacher /tmp/$KIMERA_WS/src ./src
 RUN --mount=type=cache,target=/var/cache/apt \
     --mount=type=cache,target=/var/lib/apt \
     . $UNDERLAY_WS/install/setup.sh && \
@@ -99,14 +93,14 @@ RUN --mount=type=cache,target=/var/cache/apt \
         $UNDERLAY_WS/src \
       --ignore-src
 
-# build overlay source
-COPY --from=cacher $OVERLAY_WS/src ./src
-ARG OVERLAY_MIXINS="release ccache"
+# build kimera source
+COPY --from=cacher $KIMERA_WS/src ./src
+ARG KIMERA_MIXINS="release ccache"
 RUN --mount=type=cache,target=/root/.ccache \
     . $UNDERLAY_WS/install/setup.sh && \
     colcon build \
       --symlink-install \
-      --mixin $OVERLAY_MIXINS \
+      --mixin $KIMERA_MIXINS \
       --cmake-args \
         --no-warn-unused-cli \
         -DCMAKE_CXX_FLAGS="\
@@ -119,34 +113,6 @@ RUN --mount=type=cache,target=/root/.ccache \
           -Wno-unused-parameter \
           -Wno-unused-value \
           -Wno-unused-variable"
-      # --event-handlers console_direct+
-
-# install kimera dependencies
-ARG KIMERA_WS
-WORKDIR $KIMERA_WS
-COPY --from=cacher /tmp/$KIMERA_WS/src ./src
-RUN --mount=type=cache,target=/var/cache/apt \
-    --mount=type=cache,target=/var/lib/apt \
-    . $OVERLAY_WS/install/setup.sh && \
-    export DEBIAN_FRONTEND=noninteractive && \
-    apt-get update && rosdep install -q -y \
-      --from-paths src \
-        $UNDERLAY_WS/src \
-        $OVERLAY_WS/src \
-      --ignore-src
-
-# build kimera source
-COPY --from=cacher $KIMERA_WS/src ./src
-ARG KIMERA_MIXINS="release ccache"
-RUN --mount=type=cache,target=/root/.ccache \
-    . $OVERLAY_WS/install/setup.sh && \
-    colcon build \
-      --symlink-install \
-      --mixin $KIMERA_MIXINS \
-      --cmake-args \
-        --no-warn-unused-cli \
-        -DCMAKE_CXX_FLAGS="\
-          -w"
       # --event-handlers console_direct+
 
 # restore apt for docker

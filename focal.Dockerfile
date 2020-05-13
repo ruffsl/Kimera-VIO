@@ -105,8 +105,11 @@ RUN --mount=type=cache,target=/root/.ccache \
         --no-warn-unused-cli \
         -DCMAKE_CXX_FLAGS="\
           -Wno-comment \
+          -Wno-maybe-uninitialized \
           -Wno-parentheses \
+          -Wno-pragma-once-outside-header \
           -Wno-reorder \
+          -Wno-return-type \
           -Wno-sign-compare \
           -Wno-unused-but-set-variable \
           -Wno-unused-function \
